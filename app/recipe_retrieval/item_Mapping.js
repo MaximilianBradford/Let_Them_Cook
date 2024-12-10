@@ -2,13 +2,28 @@
 import React, { useState, useEffect } from "react";
 import Recipe from './Recipe.js';
 
-export default function RowOfItems({condition}) {
+export default function RowOfItems({ condition, limits, search }) {
     const [recipes, setRecipes] = useState([]);
-
-    async function fetchRecipes(condition) {
+    console.log('RowOfItems:', condition, limits);
+    async function fetchRecipes(condition, limits) {
         try {
             const apiKey = '3b39dfa22f1f42468f01ad86fa554199'; // Replace with your actual API key
-            const response = await fetch(`https://api.spoonacular.com/recipes/complexSearch?query=${condition}&apiKey=${apiKey}`);
+            let url = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${apiKey}`;
+            
+            if (condition) {
+                url += `&query=${condition}`;
+            }
+            if (limits) {
+                url += `&intolerances=${limits}`;
+            }
+
+            if (search === true) {
+                url += `&number=36`;
+            } else {
+                url += `&number=5`;
+            }
+
+            const response = await fetch(url);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -18,43 +33,27 @@ export default function RowOfItems({condition}) {
             return data;
         } catch (error) {
             console.log("Error fetching recipes:", error);
+            return null;
         }
     }
 
-    // Add validation function
-    function isValidRecipe(recipe) {
-        return recipe &&
-               typeof recipe === 'object' &&
-               typeof recipe.id === 'number' &&
-               typeof recipe.title === 'string' &&
-               typeof recipe.image === 'string' &&
-               recipe.title.trim() !== '' &&
-               recipe.image.trim() !== '';
-    }
-
-    // Modify loadRecipes function
     async function loadRecipes() {
-        const data = await fetchRecipes(condition);
+        console.log('Loading recipes for condition:', condition, 'and limits:', limits);
+        const data = await fetchRecipes(condition, limits);
+        console.log('Fetched data:', data);
         if (data && data.results !== undefined) {
-            const validRecipes = data.results
-                .filter(recipe => {
-                    const isValid = isValidRecipe(recipe);
-                    if (!isValid) {
-                        console.warn('Invalid recipe object:', recipe);
-                    }
-                    return isValid;
-                })
-                .slice(0, 20);
+            const validRecipes = data.results.slice(0, 20);
             setRecipes(validRecipes);
             console.log('Valid recipes:', validRecipes);
         } else {
             setRecipes([]);
+            console.warn('Invalid or missing recipe data:', data);
         }
     }
 
     useEffect(() => {
         loadRecipes();
-    }, [condition]);
+    }, [condition, limits]);
 
     if (!recipes || recipes.length === 0) {
         return <div className="text-2xl m-2">No recipes available</div>;
@@ -73,5 +72,4 @@ export default function RowOfItems({condition}) {
             ))}
         </div>
     );
-
 }
