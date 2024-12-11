@@ -72,7 +72,7 @@ export default function Page() {
       {userQuery ? (
         <div className="search-results">
           <p className="flex text-lg m-2 font-bold justify-center">
-            Search Results for "{userQuery}"
+            Search Results for: {userQuery}
           </p>
           <p className="flex text-lg m-2 font-bold justify-center">
             Limitations: {limitations}
